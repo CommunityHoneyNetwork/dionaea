@@ -1,0 +1,18 @@
+---
+  pkgs:
+    - git
+    - python-virtualenv
+    - autoconf
+    - automake
+    - check
+    - libtool
+    - curl
+
+  dionaea_repo: http://github.com/dinotools/dionaea
+
+  dionaea_version: master
+
+  dionaea_dir: /opt/dionaea
+  dionaea_user: dionaea
+
+  runit_service_dir: /etc/service/dionaea
