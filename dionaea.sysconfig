@@ -1,8 +1,8 @@
 
 DEBUG=true
 
-CHN_SERVER="http://chnserver"
-DEPLOY_KEY="c0ZM2XZH"
+CHN_SERVER="http://localhost"
+DEPLOY_KEY=""
 
 # Network options
 LISTEN_ADDRESSES="0.0.0.0"
@@ -16,5 +16,5 @@ SERVICES=(ftp mssql smb)
 
 # Logging options
 HPFEEDS_ENABLED=true
-FEEDS_SERVER="hpfeeds"
+FEEDS_SERVER="localhost"
 FEEDS_SERVER_PORT=10000
