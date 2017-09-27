@@ -1,0 +1,18 @@
+language: generic
+
+sudo: required
+
+services:
+  - docker
+
+env:
+  - BUILD=ubuntu
+  - BUILD=centos
+
+script:
+  - "docker-compose build $BUILD"
+  - "docker-compose run --entrypoint /opt/dionaea/bin/dionaea $BUILD status"
+
+notifications:
+  email:
+    - collins.christopher@gmail.com
