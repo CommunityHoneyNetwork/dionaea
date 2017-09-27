@@ -54,12 +54,14 @@
           - "make"
           - "make install"
 
-      - name: Dionaea | set file perms
+      - name: Dionaea | set dionaea file perms
         file:
           path: "{{ dionaea_dir }}"
           owner: "{{ dionaea_user }}"
           group: root
           recurse: yes
+
+      - name: Dionaea | set var file perms
         file:
           path: "{{ dionaea_dir }}/var/dionaea"
           owner: nobody
