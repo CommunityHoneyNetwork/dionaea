@@ -1,0 +1,17 @@
+version: '2'
+services:
+  ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile-ubuntu
+    image: dionaea:ubuntu
+    volumes:
+      - ./dionaea.sysconfig:/etc/default/dionaea:z
+
+#  centos:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile-centos
+#    image: dionaea:centos
+#    volumes:
+#      - ./dionaea.sysconfig:/etc/default/dionaea:z
