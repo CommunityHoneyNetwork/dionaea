@@ -7,12 +7,12 @@ services:
 
 env:
   - BUILD=ubuntu
-  - BUILD=centos
+#  - BUILD=centos
 
 script:
   - "docker-compose build $BUILD"
-  - "docker-compose run --entrypoint /opt/dionaea/bin/dionaea $BUILD status"
+  - "docker-compose run $BUILD status"
 
 notifications:
   email:
-    - collins.christopher@gmail.com
+    - breakfastdub@gmail.com

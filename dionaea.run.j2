@@ -50,7 +50,7 @@ setup_dionaea_conf () {
     # Enable services
     rm -f ./services-enabled/*.yaml
     for i in ${SERVICES[@]}; do
-      ln -s {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
+      cp {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
     done
 
     rm -f ./ihandlers-enabled/*.yaml
