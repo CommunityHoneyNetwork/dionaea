@@ -1,0 +1,87 @@
+---
+  - hosts: all
+
+    tasks:
+      - name: Dionaea | Gather | print os info
+        debug:
+          msg: "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}"
+
+      - name: Dionaea | Gather | os info
+        include_vars: "{{ item }}"
+        with_first_found:
+          - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+          - "{{ ansible_distribution }}.yml"
+        tags: vars
+
+      - name: Dionaea | Gather | default info
+        include_vars:
+          file: default.yml
+        tags: vars
+
+      - name: Dionaea | install non-specific packages
+        package:
+          name: "{{ item }}"
+        with_items: "{{ pkgs }}"
+
+      - name: Dionaea | install os-specific packages
+        package:
+          name: "{{ item }}"
+        with_items: "{{ pkgs_osspec }}"
+
+      - name: Dionaea | add users group
+        group:
+          name: users
+
+      - name: Dionaea | create dionaea user
+        user:
+          name: dionaea
+          shell: /bin/bash
+          group: users
+
+      - name: Dionaea | clone dionaea source
+        git:
+          repo: "{{ dionaea_repo }}"
+          version: "{{ dionaea_version }}"
+          dest: /opt/dionaea
+
+      - name: Dionaea | build dionaea
+        command: "{{ item }}"
+        args:
+          chdir: /opt/dionaea
+        with_items:
+          - "autoreconf -vi"
+          - "./configure {{config_options}}"
+          - "make"
+          - "make install"
+
+      - name: Dionaea | set dionaea file perms
+        file:
+          path: "{{ dionaea_dir }}"
+          owner: "{{ dionaea_user }}"
+          group: root
+          recurse: yes
+
+      - name: Dionaea | set var file perms
+        file:
+          path: "{{ dionaea_dir }}/var/dionaea"
+          owner: nobody
+          group: nogroup
+          recurse: yes
+
+      - name: Dionaea | copy dionaea sysconfig file
+        copy:
+          dest: "{{ sysconfig_dir }}/dionaea"
+          src: dionaea.sysconfig
+          mode: 0644
+
+      - name: Dionaea | create runit directories
+        file:
+          state: directory
+          path: "{{ runit_service_dir }}"
+          mode: 0755
+
+      - name: Dionaea | create dionaea runit run file
+        template:
+          src: dionaea.run.j2
+          dest: "{{ runit_service_dir }}/run"
+          mode: 0755

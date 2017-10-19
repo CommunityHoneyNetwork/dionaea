@@ -1,0 +1,13 @@
+---
+  pkgs_osspec:
+    - python34-cython
+    - libcurl-devel
+    - libev-devel
+    - glib2-devel
+    - libnetfliter_queue-devel
+    - libnl-devel
+    - openssl-devel
+    - python34
+    - python34-devel
+
+  sysconfig_dir: /etc/default
