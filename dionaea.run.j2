@@ -23,7 +23,7 @@ register () {
         return 1
     fi
 
-    curl -s -X POST -H "Content-Type: application/json" -d "{
+    curl -k -s -X POST -H "Content-Type: application/json" -d "{
       \"name\": \"${hostname}-${honeypot}\",
       \"hostname\": \"$hostname\",
       \"deploy_key\": \"$deploy_key\",
