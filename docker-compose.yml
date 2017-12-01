@@ -8,10 +8,4 @@ services:
     volumes:
       - ./dionaea.sysconfig:/etc/default/dionaea:z
 
-#  centos:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile-centos
-#    image: dionaea:centos
-#    volumes:
-#      - ./dionaea.sysconfig:/etc/default/dionaea:z
+# No CentOS version
