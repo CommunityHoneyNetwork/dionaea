@@ -13,8 +13,7 @@ ENV DOCKER "yes"
 ENV playbook "dionaea.yml"
 
 RUN apt-get update \
-    && apt-get install -y ansible
-RUN apt-get install -y python-apt
+    && apt-get install -y ansible python-apt
 
 RUN echo "localhost ansible_connection=local" >> /etc/ansible/hosts
 ADD . /opt/
