@@ -20,4 +20,3 @@ ADD . /opt/
 RUN ansible-playbook /opt/${playbook}
 
 ENTRYPOINT ["/usr/bin/runsvdir", "-P", "/etc/service"]
-#ENTRYPOINT ["/bin/bash"]
