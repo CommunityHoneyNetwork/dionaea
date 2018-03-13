@@ -1,6 +1,6 @@
 FROM ubuntu:17.10
 
-LABEL maintainer Alexander Merck <breakfastdub@gmail.com>
+LABEL maintainer Alexander Merck <alexander.t.merck@gmail.com>
 LABEL name "dionaea"
 LABEL version "0.1"
 LABEL release "1"
