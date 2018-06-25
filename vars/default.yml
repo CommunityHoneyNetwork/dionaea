@@ -10,7 +10,7 @@
 
   dionaea_repo: http://github.com/dinotools/dionaea
 
-  dionaea_version: master
+  dionaea_version: 0.7.0
 
   dionaea_dir: /opt/dionaea
   dionaea_user: dionaea
