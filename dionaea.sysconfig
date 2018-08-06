@@ -1,6 +1,10 @@
 
 DEBUG=true
 
+# IP Address of the honeypot
+# Leaving this blank will default to the docker container IP
+IP_ADDRESS=
+
 CHN_SERVER="http://localhost"
 DEPLOY_KEY=""
 

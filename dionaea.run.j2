@@ -17,6 +17,7 @@ register () {
     local json="${3:-dionaea}"
     local hostname="$(hostname -f)"
     local honeypot="dionaea"
+    local ip="${4:-}"
 
     if [[ -z ${deploy_key} ]]
     then
@@ -26,6 +27,7 @@ register () {
     curl -k -s -X POST -H "Content-Type: application/json" -d "{
       \"name\": \"${hostname}-${honeypot}\",
       \"hostname\": \"$hostname\",
+      \"ip\": \"${ip}\",
       \"deploy_key\": \"$deploy_key\",
       \"honeypot\": \"$honeypot\"
     }" ${chnserver}/api/sensor/ > ${json}
@@ -79,6 +81,7 @@ main() {
   local feeds_server=${FEEDS_SERVER:-localhost}
   local feeds_server_port=${FEEDS_SERVER_PORT:-10000}
   local json=${DIONAEA_JSON:-dionaea.json}
+  local ip=${IP_ADDRESS:-}
 
   local debug=${DEBUG:-false}
 
@@ -91,7 +94,7 @@ main() {
   # If it doesn't exist or is empty
   if [[ ! -f ${json}  ]] || [[ ! -s ${json} ]]
   then
-    register ${deploy_key} ${chn_server} ${json}
+    register ${deploy_key} ${chn_server} ${json} ${ip}
 
     return=$?
 
