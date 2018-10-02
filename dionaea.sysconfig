@@ -7,6 +7,7 @@ IP_ADDRESS=
 
 CHN_SERVER="http://localhost"
 DEPLOY_KEY=""
+DIONAEA_JSON="/etc/dionaea/dionaea.json"
 
 # Network options
 LISTEN_ADDRESSES="0.0.0.0"
