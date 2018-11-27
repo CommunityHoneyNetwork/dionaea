@@ -3,9 +3,6 @@ services:
   ubuntu:
     build:
       context: .
-      dockerfile: Dockerfile-ubuntu
     image: dionaea:ubuntu
     volumes:
       - ./dionaea.sysconfig:/etc/default/dionaea:z
-
-# No CentOS version
