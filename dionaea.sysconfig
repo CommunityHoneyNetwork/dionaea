@@ -23,3 +23,6 @@ SERVICES=(ftp mssql smb)
 HPFEEDS_ENABLED=true
 FEEDS_SERVER="localhost"
 FEEDS_SERVER_PORT=10000
+
+# Comma separated tags for honeypot
+TAGS=
