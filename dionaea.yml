@@ -44,6 +44,11 @@
           version: "{{ dionaea_version }}"
           dest: /opt/dionaea
 
+      - name: Dionaea | copy output plugin
+        copy:
+          src: "/opt/outputs/hpfeeds.py"
+          dest: "{{ dionaea_dir }}/modules/python/dionaea/"
+
       - name: Dionaea | build dionaea
         command: "{{ item }}"
         args:
@@ -53,6 +58,11 @@
           - "./configure {{config_options}}"
           - "make"
           - "make install"
+
+      - name: Dionaea | copy hpfeeds config
+        copy:
+          src: "/opt/outputs/hpfeeds.yaml"
+          dest: "{{ dionaea_dir }}/etc/dionaea/ihandlers-available/"
 
       - name: Dionaea | set dionaea file perms
         file:
