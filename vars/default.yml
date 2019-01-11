@@ -7,6 +7,7 @@
     - check
     - libtool
     - curl
+    - cron
 
   dionaea_repo: http://github.com/dinotools/dionaea
 

@@ -78,6 +78,29 @@
           group: nogroup
           recurse: yes
 
+      - name: Dionaea | set clean_bistreams.sh file permissions
+        file:
+          path: "/opt/clean_bistreams.sh"
+          mode: 0755
+
+      - name: Dionaea | set clean_bistreams.sh cron
+        cron:
+          name: "clean bistreams"
+          job: "/opt/clean_bistreams.sh"
+          minute: "*/5"
+
+      - name: Dionaea | create cron runit directories
+        file:
+          state: directory
+          path: "/etc/service/cron"
+          mode: 0755
+
+      - name: Dionaea | create dionaea runit run file
+        template:
+          src: cron.run
+          dest: "/etc/service/cron/run"
+          mode: 0755
+
       - name: Dionaea | copy dionaea sysconfig file
         copy:
           dest: "{{ sysconfig_dir }}/dionaea"
