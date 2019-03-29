@@ -1,29 +1,29 @@
-#********************************************************************************
-#*                               Dionaea
-#*                           - catches bugs -
-#*
-#*
-#*
-#* Copyright (C) 2010  Mark Schloesser
-#*
-#* This program is free software; you can redistribute it and/or
-#* modify it under the terms of the GNU General Public License
-#* as published by the Free Software Foundation; either version 2
-#* of the License, or (at your option) any later version.
-#*
-#* This program is distributed in the hope that it will be useful,
-#* but WITHOUT ANY WARRANTY; without even the implied warranty of
-#* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#* GNU General Public License for more details.
-#*
-#* You should have received a copy of the GNU General Public License
-#* along with this program; if not, write to the Free Software
-#* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#*
-#*
-#*             contact nepenthesdev@gmail.com
-#*
-#*******************************************************************************/
+# ********************************************************************************
+# *                               Dionaea
+# *                           - catches bugs -
+# *
+# *
+# *
+# * Copyright (C) 2010  Mark Schloesser
+# *
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# *
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# *
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# *
+# *
+# *             contact nepenthesdev@gmail.com
+# *
+# *******************************************************************************/
 
 from dionaea import IHandlerLoader
 from dionaea.core import ihandler, incident, g_dionaea, connection
@@ -45,18 +45,18 @@ except ImportError:
 logger = logging.getLogger('hpfeeds')
 logger.setLevel(logging.DEBUG)
 
-#def DEBUGPERF(msg):
-#	print(msg)
-#logger.debug = DEBUGPERF
-#logger.critical = DEBUGPERF
+# def DEBUGPERF(msg):
+# 	print(msg)
+# logger.debug = DEBUGPERF
+# logger.critical = DEBUGPERF
 
 BUFSIZ = 16384
 
-OP_ERROR        = 0
-OP_INFO         = 1
-OP_AUTH         = 2
-OP_PUBLISH      = 3
-OP_SUBSCRIBE    = 4
+OP_ERROR = 0
+OP_INFO = 1
+OP_AUTH = 2
+OP_PUBLISH = 3
+OP_SUBSCRIBE = 4
 
 MAXBUF = 1024**2
 SIZES = {
@@ -97,13 +97,13 @@ def timestr():
 def strpack8(x):
     if isinstance(x, str):
         x = x.encode('latin1')
-    return struct.pack('!B', len(x)%0xff) + x
+    return struct.pack('!B', len(x) % 0xff) + x
 
 
 # unpacks a string with 1 byte length field
 def strunpack8(x):
-    l = x[0]
-    return x[1:1+l], x[1+l:]
+    length = x[0]
+    return x[1:1+length], x[1+length:]
 
 
 def msghdr(op, data):
@@ -281,7 +281,7 @@ class hpfeedihandler(ihandler):
             port = self.default_port
         try:
             port = int(port)
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError):
             logger.warn("Unable to convert value '%s' for port to int" % port)
             port = self.default_port
 
@@ -327,7 +327,7 @@ class hpfeedihandler(ihandler):
 
     def connection_publish(self, icd, con_type):
         try:
-            con=icd.con
+            con = icd.con
             self.client.publish(
                 CONNCHAN,
                 tags=self.tags,
@@ -348,101 +348,352 @@ class hpfeedihandler(ihandler):
 
     def handle_incident_dionaea_connection_tcp_listen(self, icd):
         self.connection_publish(icd, 'listen')
-        con=icd.con
+        con = icd.con
         logger.info("listen connection on %s:%i" %
-            (con.remote.host, con.remote.port))
+                    (con.remote.host, con.remote.port))
 
     def handle_incident_dionaea_connection_tls_listen(self, icd):
         self.connection_publish(icd, 'listen')
-        con=icd.con
+        con = icd.con
         logger.info("listen connection on %s:%i" %
-            (con.remote.host, con.remote.port))
+                    (con.remote.host, con.remote.port))
 
     def handle_incident_dionaea_connection_tcp_connect(self, icd):
         self.connection_publish(icd, 'connect')
-        con=icd.con
+        con = icd.con
         logger.info("connect connection to %s/%s:%i from %s:%i" %
-            (con.remote.host, con.remote.hostname, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.hostname, con.remote.port, self._ownip(icd), con.local.port))
 
     def handle_incident_dionaea_connection_tls_connect(self, icd):
         self.connection_publish(icd, 'connect')
-        con=icd.con
+        con = icd.con
         logger.info("connect connection to %s/%s:%i from %s:%i" %
-            (con.remote.host, con.remote.hostname, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.hostname, con.remote.port, self._ownip(icd), con.local.port))
 
     def handle_incident_dionaea_connection_udp_connect(self, icd):
         self.connection_publish(icd, 'connect')
-        con=icd.con
+        con = icd.con
         logger.info("connect connection to %s/%s:%i from %s:%i" %
-            (con.remote.host, con.remote.hostname, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.hostname, con.remote.port, self._ownip(icd), con.local.port))
 
     def handle_incident_dionaea_connection_tcp_accept(self, icd):
         self.connection_publish(icd, 'accept')
-        con=icd.con
+        con = icd.con
         logger.info("accepted connection from  %s:%i to %s:%i" %
-            (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
 
     def handle_incident_dionaea_connection_tls_accept(self, icd):
         self.connection_publish(icd, 'accept')
-        con=icd.con
+        con = icd.con
         logger.info("accepted connection from %s:%i to %s:%i" %
-            (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
 
     def handle_incident_dionaea_connection_tcp_reject(self, icd):
         self.connection_publish(icd, 'reject')
         con = icd.con
         logger.info("reject connection from %s:%i to %s:%i" %
-            (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
 
     def handle_incident_dionaea_connection_tcp_pending(self, icd):
         self.connection_publish(icd, 'pending')
-        con=icd.con
+        con = icd.con
         logger.info("pending connection from %s:%i to %s:%i" %
-            (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
+                    (con.remote.host, con.remote.port, self._ownip(icd), con.local.port))
 
-    def handle_incident_dionaea_download_complete_unique(self, i):
-        self.handle_incident_dionaea_download_complete_again(i)
-        if not hasattr(i, 'con') or not self.client.connected:
-            return
-        logger.debug('unique complete, publishing md5 {0}, path {1}'.format(i.md5hash, i.file))
-        try:
-            self.client.sendfile(i.file)
-        except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
-
-    def handle_incident_dionaea_download_complete_again(self, i):
-        if not hasattr(i, 'con') or not self.client.connected: return
-        logger.debug('hash complete, publishing md5 {0}, path {1}'.format(i.md5hash, i.file))
+    def handle_incident_dionaea_download_offer(self, icd):
         try:
             tstamp = timestr()
-            sha512 = sha512file(i.file)
             self.client.publish(
                 CAPTURECHAN,
                 time=tstamp,
-                saddr=i.con.remote.host,
-                sport=str(i.con.remote.port),
-                daddr=self._ownip(i),
-                dport=str(i.con.local.port),
-                md5=i.md5hash,
-                sha512=sha512,
-                url=i.url
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                url=icd.url
             )
         except Exception as e:
             logger.warn('exception when publishing: {0}'.format(e))
 
-    def handle_incident_dionaea_modules_python_smb_dcerpc_request(self, i):
-        if not hasattr(i, 'con') or not self.client.connected:
+    def handle_incident_dionaea_download_complete_hash(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                md5=icd.md5hash,
+                url=icd.url,
+                action="download",
+                status="successful"
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_download_complete_unique(self, icd):
+        self.handle_incident_dionaea_download_complete_again(icd)
+        if not hasattr(id, 'con') or not self.client.connected:
             return
-        logger.debug('dcerpc request, publishing uuid {0}, opnum {1}'.format(i.uuid, i.opnum))
+        logger.debug('unique complete, publishing md5 {0}, path {1}'.format(icd.md5hash, icd.file))
+        try:
+            self.client.sendfile(icd.file)
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_download_complete_again(self, icd):
+        if not hasattr(icd, 'con') or not self.client.connected:
+            return
+        logger.debug('hash complete, publishing md5 {0}, path {1}'.format(icd.md5hash, icd.file))
+        try:
+            tstamp = timestr()
+            sha512 = sha512file(icd.file)
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                md5=icd.md5hash,
+                sha512=sha512,
+                url=icd.url
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_service_shell_listen(self, icd):
+        try:
+            tstamp = timestr()
+            url = "bindshell://{}".format(str(icd.port))
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                url=url
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_service_shell_connect(self, icd):
+        try:
+            tstamp = timestr()
+            url = "connectbackshell://" + str(icd.host) + ":" + str(icd.port)
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                url=url
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_ftp_login(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                username=icd.username,
+                password=icd.password
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_smb_dcerpc_bind(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                smb_uuid=icd.uuid,
+                smd_transfersyntax=icd.transfersyntax
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_smb_dcerpc_request(self, icd):
+        if not hasattr(icd, 'con') or not self.client.connected:
+            return
+        logger.debug('dcerpc request, publishing uuid {0}, opnum {1}'.format(icd.uuid, icd.opnum))
         try:
             self.client.publish(
                 DCECHAN,
-                uuid=i.uuid,
-                opnum=i.opnum,
-                saddr=i.con.remote.host,
-                sport=str(i.con.remote.port),
-                daddr=self._ownip(i),
-                dport=str(i.con.local.port)
+                uuid=icd.uuid,
+                opnum=icd.opnum,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port)
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mssql_login(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                username=icd.username,
+                password=icd.password
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mssql_cmd(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                cmd=icd.cmd
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_virustotal_report(self, icd):
+        data = {'virustotal': dict()}
+        md5 = icd.md5hash
+        f = open(icd.path, mode='r')
+        j = json.load(f)
+
+        # file was known to virustotal
+        if j['response_code'] == 1:
+            permalink = j['permalink']
+            date = j['scan_date']
+            data['virustotal']['md5sum'] = md5
+            data['virustotal']['permalink'] = permalink
+            data['virustotal']['date'] = date
+            data['virustotal']['results'] = []
+
+            scans = j['scans']
+            for av, val in scans.items():
+                res = val['result']
+                if res == '':
+                    res = None
+                result = {'av': av, 'status': res}
+                data['virustotal']['results'].append(result)
+
+            try:
+                tstamp = timestr()
+                self.client.publish(
+                    CAPTURECHAN,
+                    time=tstamp,
+                    saddr=icd.con.remote.host,
+                    sport=str(icd.con.remote.port),
+                    daddr=self._ownip(icd),
+                    dport=str(icd.con.local.port),
+                    virustotal=data['virustotal']
+                )
+            except Exception as e:
+                logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mysql_login(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                username=icd.username,
+                password=icd.password
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mysql_command(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                cmd=icd.cmd
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mqtt_connect(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                username=icd.username,
+                password=icd.password,
+                mqtt_action="connect",
+                mqtt_clientid=icd.clientid,
+                mqtt_willtopic=icd.willtopic,
+                mqtt_willmessage=icd.willmessage
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mqtt_publish(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                mqtt_action="publish",
+                mqtt_topic=icd.publishtopic,
+                mqtt_message=icd.publishmessage
+            )
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_mqtt_subscribe(self, icd):
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                mqtt_action="subscribe",
+                mqtt_topic=icd.subscribetopic,
+                mqtt_message=icd.subscribemessage
             )
         except Exception as e:
             logger.warn('exception when publishing: {0}'.format(e))
@@ -453,6 +704,117 @@ class hpfeedihandler(ihandler):
         logger.debug('emu profile, publishing length {0}'.format(len(icd.profile)))
         try:
             self.client.publish(SCPROFCHAN, profile=icd.profile)
+        except Exception as e:
+            logger.warn('exception when publishing: {0}'.format(e))
+
+    def handle_incident_dionaea_modules_python_sip_command(self, icd):
+
+        def add_addr(_type, addr):
+            logger.info("adding address: " + str(addr))
+
+            addr_data = {'type': _type,
+                         'display_name': addr['display_name'],
+                         'uri_scheme': addr['uri']['scheme'],
+                         'uri_username': addr['uri']['user'],
+                         'uri_password': addr['uri']['password'],
+                         'uri_host': addr['uri']['host'],
+                         'uri_port': addr['uri']['port']}
+            return addr_data
+
+        def add_sdp_condata(c):
+            con_data = {'network_type': c['nettype'],
+                        'address_type': c['addrtype'],
+                        'connection_address': c['connection_address'],
+                        'ttl': c['ttl'],
+                        'number_of_addresses': c['number_of_addresses']}
+            return con_data
+
+        def add_sdp_media(c):
+            media_data = {'media': c['media'],
+                          'port': c['port'],
+                          'number_of_ports': c['number_of_ports'],
+                          'protocol': c['proto']}
+            return media_data
+
+        def add_sdp_origin(o):
+            origin_data = {'username': o['username'],
+                           'session_id': o['sess_id'],
+                           'session_version': o['sess_version'],
+                           'network_type': o['nettype'],
+                           'address_type': o['addrtype'],
+                           'unicast_address': o['unicast_address']}
+            return origin_data
+
+        def calc_allow(a):
+            b = {b'UNKNOWN': (1 << 0),
+                 'ACK': (1 << 1),
+                 'BYE': (1 << 2),
+                 'CANCEL': (1 << 3),
+                 'INFO': (1 << 4),
+                 'INVITE': (1 << 5),
+                 'MESSAGE': (1 << 6),
+                 'NOTIFY': (1 << 7),
+                 'OPTIONS': (1 << 8),
+                 'PRACK': (1 << 9),
+                 'PUBLISH': (1 << 10),
+                 'REFER': (1 << 11),
+                 'REGISTER': (1 << 12),
+                 'SUBSCRIBE': (1 << 13),
+                 'UPDATE': (1 << 14)
+                 }
+            allow = 0
+            for i in a:
+                if i in b:
+                    allow |= b[i]
+                else:
+                    allow |= b[b'UNKNOWN']
+            return allow
+
+        data = {'sip_data': {
+                    'method': icd.method,
+                    'call_id': icd.call_id,
+                    'user_agent': icd.user_agent,
+                    'allow': calc_allow(icd.allow),
+                    'sdp_origin': None,
+                    'sdp_condata': None,
+                    'sdp_media': []
+               }}
+
+        data['sip_data']['names'] = []
+        for name in ('addr', 'to', 'contact'):
+            data['sip_data']['names'].append(add_addr(name, icd.get(name)))
+
+        for elem in icd.get('from'):
+            data['sip_data']['names'].append(add_addr("from", elem))
+
+        data['sip_data']['vias'] = []
+        for via in icd.get('via'):
+            via_data = {'protocol': via["protocol"],
+                        'address': via["address"],
+                        'port': via["port"]}
+            data['sip_data']['vias'].append(via_data)
+
+        sdp_data = icd.get("sdp")
+        if sdp_data is not None:
+            if 'o' in sdp_data:
+                data['sip_data']['sdp_origin'] = add_sdp_origin(sdp_data['o'])
+            if 'c' in sdp_data:
+                data['sip_data']['sdp_condata'] = add_sdp_condata(sdp_data['c'])
+            if 'm' in sdp_data:
+                for media in sdp_data['m']:
+                    data['sip_data']['sdp_media'].append(add_sdp_media(media))
+
+        try:
+            tstamp = timestr()
+            self.client.publish(
+                CAPTURECHAN,
+                time=tstamp,
+                saddr=icd.con.remote.host,
+                sport=str(icd.con.remote.port),
+                daddr=self._ownip(icd),
+                dport=str(icd.con.local.port),
+                sip_data=data['sip_data']
+            )
         except Exception as e:
             logger.warn('exception when publishing: {0}'.format(e))
 
