@@ -49,6 +49,10 @@ setup_dionaea_conf () {
     sed -i "s/# listen.addresses=.*/listen.addresses=$LISTEN_ADDRESSES/g" dionaea.cfg
     sed -i "s/# listen.interfaces=.*/listen.interfaces=$LISTEN_INTERFACES/g" dionaea.cfg
     sed -i "s/default.levels=all/default.levels=all,-debug/g" dionaea.cfg
+    sed -i "s/# ssl.default.c=GB/ssl.default.c=US/" dionaea.cfg
+    sed -i "s/# ssl.default.cn=/ssl.default.cn=test.example.org/" dionaea.cfg
+    sed -i "s/# ssl.default.o=/ssl.default.o=example.org/" dionaea.cfg
+    sed -i "s/# ssl.default.ou=/ssl.default.ou=test" dionaea.cfg
 
     # Enable services
     #for i in ${SERVICES[@]}; do
