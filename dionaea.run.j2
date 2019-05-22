@@ -34,6 +34,17 @@ register () {
 
 }
 
+setup_default_dionaea_cfg () {
+    # Set up the default dionaea.cfg
+    cp dionaea.cfg dionaea.cfg.orig
+    sed -i "s/# listen.addresses=.*/listen.addresses=$LISTEN_ADDRESSES/g" dionaea.cfg
+    sed -i "s/# listen.interfaces=.*/listen.interfaces=$LISTEN_INTERFACES/g" dionaea.cfg
+    sed -i "s/default.levels=all/default.levels=all,-debug/g" dionaea.cfg
+    sed -i "s/# ssl.default.c=GB/ssl.default.c=US/g" dionaea.cfg
+    sed -i "s/# ssl.default.cn=/ssl.default.cn=test.example.org/g" dionaea.cfg
+    sed -i "s/# ssl.default.o=/ssl.default.o=example.org/g" dionaea.cfg
+    sed -i "s/# ssl.default.ou=/ssl.default.ou=test/g" dionaea.cfg
+}
 
 setup_dionaea_conf () {
 
@@ -42,23 +53,23 @@ setup_dionaea_conf () {
     local uid=${1:-}
     local secret=${2:-}
     local debug=${3:-false}
+    local personality=${PERSONALITY:-default}
 
     pushd /opt/dionaea/etc/dionaea
-    cp dionaea.cfg dionaea.cfg.orig
 
-    sed -i "s/# listen.addresses=.*/listen.addresses=$LISTEN_ADDRESSES/g" dionaea.cfg
-    sed -i "s/# listen.interfaces=.*/listen.interfaces=$LISTEN_INTERFACES/g" dionaea.cfg
-    sed -i "s/default.levels=all/default.levels=all,-debug/g" dionaea.cfg
-    sed -i "s/# ssl.default.c=GB/ssl.default.c=US/g" dionaea.cfg
-    sed -i "s/# ssl.default.cn=/ssl.default.cn=test.example.org/g" dionaea.cfg
-    sed -i "s/# ssl.default.o=/ssl.default.o=example.org/g" dionaea.cfg
-    sed -i "s/# ssl.default.ou=/ssl.default.ou=test/g" dionaea.cfg
+    if [[ ${personality} == "default" ]] || [ ! -f {{ sysconfig_dir }}/personalities/${personality}/dionaea.cfg ]
+    then
+      setup_default_dionaea_cfg
+    else
+      cp {{ sysconfig_dir }}/personalities/${personality}/dionaea.cfg /opt/dionaea/etc/dionaea
+      for FILE in {{ sysconfig_dir }}/personalities/${personality}/services-available/*.yaml
+      do
+        cp ${FILE} /opt/dionaea/etc/dionaea/services-available
+      done
+    fi
 
-    # Enable services
-    #for i in ${SERVICES[@]}; do
-    #  /bin/cp -f {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
-    #done
 
+    # Remove other handlers and set up hpfeeds if enabled
     rm -f ./ihandlers-enabled/*.yaml
     if [[ ${HPFEEDS_ENABLED} == "true" ]]
     then
@@ -95,6 +106,7 @@ main() {
   if [[ -z ${deploy_key} ]]
   then
     echo "[CRIT] - No deploy key found"
+    sleep 10
     exit 1
   fi
 
@@ -108,6 +120,7 @@ main() {
     if [[ $return -ne 0 ]]
     then
       echo "Failed to register with ${chn_server} using key: ${deploy_key}"
+      sleep 10
       exit 1
     fi
   fi
@@ -117,6 +130,7 @@ main() {
   if [ -z "$uuid" ]
   then
     echo "Could not create sensor using name \"$(hostname -f)\"."
+    sleep 10
     exit 1
   else
     echo "Created sensor: " $uuid
