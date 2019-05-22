@@ -57,14 +57,14 @@ setup_dionaea_conf () {
 
     pushd /opt/dionaea/etc/dionaea
 
-    if [[ ${personality} == "default" ]] || [ ! -f {{ sysconfig_dir }}/personalities/${personality}/dionaea.cfg ]
+    if [[ ${personality} == "default" ]] || [ ! -f /opt/personalities/${personality}/dionaea.cfg ]
     then
       setup_default_dionaea_cfg
     else
-      cp {{ sysconfig_dir }}/personalities/${personality}/dionaea.cfg /opt/dionaea/etc/dionaea
-      for FILE in {{ sysconfig_dir }}/personalities/${personality}/services-available/*.yaml
+      cp /opt/personalities/${personality}/dionaea.cfg {{ dionaea_dir }}/etc/dionaea
+      for FILE in /opt/personalities/${personality}/services-available/*.yaml
       do
-        cp ${FILE} /opt/dionaea/etc/dionaea/services-available
+        cp ${FILE} {{ dionaea_dir }}/etc/dionaea/services-available
       done
     fi
 
