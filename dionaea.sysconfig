@@ -26,3 +26,8 @@ FEEDS_SERVER_PORT=10000
 
 # Comma separated tags for honeypot
 TAGS=""
+
+# A specific "personality" directory for the Dionaea honeypot may be specified
+# here. These directories can include custom dionaea.cfg and a directory called services-enabled containing files which
+can influence the attractiveness of the honeypot.
+PERSONALITY=default
