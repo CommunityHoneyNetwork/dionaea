@@ -51,9 +51,9 @@ setup_dionaea_conf () {
     sed -i "s/default.levels=all/default.levels=all,-debug/g" dionaea.cfg
 
     # Enable services
-    #for i in ${SERVICES[@]}; do
-    #  /bin/cp -f {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
-    #done
+    for i in ${SERVICES[@]}; do
+      /bin/cp -f {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
+    done
 
     rm -f ./ihandlers-enabled/*.yaml
     if [[ ${HPFEEDS_ENABLED} == "true" ]]
@@ -66,6 +66,13 @@ setup_dionaea_conf () {
       sed -i "s/port:.*/port: ${FEEDS_SERVER_PORT}/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "s/tags:.*/tags: \[${TAGS}\]/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
     fi
+
+    for i in {1..1024}
+    do
+      touch /etc/authbind/byport/$i
+      chown dionaea /etc/authbind/byport/$i
+      chmod 755 /etc/authbind/byport/$i
+    done
 
     popd
 }
@@ -123,7 +130,7 @@ main() {
 
   setup_dionaea_conf ${uid} ${secret}
 
-  exec /opt/dionaea/bin/dionaea -c "/opt/dionaea/etc/dionaea/dionaea.cfg" -u nobody -g nogroup
+  exec /usr/bin/authbind /opt/dionaea/bin/dionaea -c "/opt/dionaea/etc/dionaea/dionaea.cfg" -u nobody -g nogroup
 }
 
 
