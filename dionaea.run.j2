@@ -24,13 +24,18 @@ register () {
         return 1
     fi
 
-    curl -k -s -X POST -H "Content-Type: application/json" -d "{
+    curl --insecure \
+      --silent \
+      --request POST \
+      --header "Content-Type: application/json" \
+      --output ${json} \
+      --data "{
       \"name\": \"${hostname}-${honeypot}\",
       \"hostname\": \"$hostname\",
       \"ip\": \"${ip}\",
       \"deploy_key\": \"$deploy_key\",
       \"honeypot\": \"$honeypot\"
-    }" ${chnserver}/api/sensor/ > ${json}
+    }" ${chnserver}/api/sensor/
 
 }
 
