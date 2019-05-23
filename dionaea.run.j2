@@ -130,7 +130,7 @@ main() {
 
   setup_dionaea_conf ${uid} ${secret}
 
-  exec /usr/bin/authbind /opt/dionaea/bin/dionaea -c "/opt/dionaea/etc/dionaea/dionaea.cfg" -u nobody -g nogroup
+  exec /usr/bin/authbind /opt/dionaea/bin/dionaea -c "/opt/dionaea/etc/dionaea/dionaea.cfg" -u dionaea -g nogroup
 }
 
 
