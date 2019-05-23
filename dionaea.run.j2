@@ -24,16 +24,32 @@ register () {
         return 1
     fi
 
-    curl -k -s -X POST -H "Content-Type: application/json" -d "{
+    curl --insecure \
+      --silent \
+      --request POST \
+      --header "Content-Type: application/json" \
+      --output ${json} \
+      --data "{
       \"name\": \"${hostname}-${honeypot}\",
       \"hostname\": \"$hostname\",
       \"ip\": \"${ip}\",
       \"deploy_key\": \"$deploy_key\",
       \"honeypot\": \"$honeypot\"
-    }" ${chnserver}/api/sensor/ > ${json}
+    }" ${chnserver}/api/sensor/
 
 }
 
+setup_default_dionaea_cfg () {
+    # Set up the default dionaea.cfg
+    cp dionaea.cfg dionaea.cfg.orig
+    sed -i "s/# listen.addresses=.*/listen.addresses=$LISTEN_ADDRESSES/g" dionaea.cfg
+    sed -i "s/# listen.interfaces=.*/listen.interfaces=$LISTEN_INTERFACES/g" dionaea.cfg
+    sed -i "s/default.levels=all/default.levels=all,-debug/g" dionaea.cfg
+    sed -i "s/# ssl.default.c=GB/ssl.default.c=US/g" dionaea.cfg
+    sed -i "s/# ssl.default.cn=/ssl.default.cn=test.example.org/g" dionaea.cfg
+    sed -i "s/# ssl.default.o=/ssl.default.o=example.org/g" dionaea.cfg
+    sed -i "s/# ssl.default.ou=/ssl.default.ou=test/g" dionaea.cfg
+}
 
 setup_dionaea_conf () {
 
@@ -42,19 +58,29 @@ setup_dionaea_conf () {
     local uid=${1:-}
     local secret=${2:-}
     local debug=${3:-false}
+    local personality=${PERSONALITY:-default}
 
     pushd /opt/dionaea/etc/dionaea
-    cp dionaea.cfg dionaea.cfg.orig
 
-    sed -i "s/# listen.addresses=.*/listen.addresses=$LISTEN_ADDRESSES/g" dionaea.cfg
-    sed -i "s/# listen.interfaces=.*/listen.interfaces=$LISTEN_INTERFACES/g" dionaea.cfg
-    sed -i "s/default.levels=all/default.levels=all,-debug/g" dionaea.cfg
+    if [[ ${personality} == "default" ]] || [ ! -f /opt/personalities/${personality}/dionaea.cfg ]
+    then
+      setup_default_dionaea_cfg
+    else
+      cp /opt/personalities/${personality}/dionaea.cfg {{ dionaea_dir }}/etc/dionaea
+      for FILE in /opt/personalities/${personality}/services-available/*.yaml
+      do
+        cp ${FILE} {{ dionaea_dir }}/etc/dionaea/services-available
+      done
+    fi
+
 
     # Enable services
     for i in ${SERVICES[@]}; do
       /bin/cp -f {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
     done
 
+
+    # Remove other handlers and set up hpfeeds if enabled
     rm -f ./ihandlers-enabled/*.yaml
     if [[ ${HPFEEDS_ENABLED} == "true" ]]
     then
@@ -64,7 +90,7 @@ setup_dionaea_conf () {
       sed -i "s/secret:.*/secret: \"${secret}\"/g" {{ dionaea_dir }}/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "/^\s*dynip_resolve:/s/^/#/g" {{ dionaea_dir }}/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "s/port:.*/port: ${FEEDS_SERVER_PORT}/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
-      sed -i "s/tags:.*/tags: \[${TAGS}\]/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
+      sed -i "s|tags:.*|tags: \[${TAGS}\]|g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
     fi
 
     for i in {1..1024}
@@ -98,6 +124,7 @@ main() {
   if [[ -z ${deploy_key} ]]
   then
     echo "[CRIT] - No deploy key found"
+    sleep 10
     exit 1
   fi
 
@@ -111,6 +138,7 @@ main() {
     if [[ $return -ne 0 ]]
     then
       echo "Failed to register with ${chn_server} using key: ${deploy_key}"
+      sleep 10
       exit 1
     fi
   fi
@@ -120,6 +148,7 @@ main() {
   if [ -z "$uuid" ]
   then
     echo "Could not create sensor using name \"$(hostname -f)\"."
+    sleep 10
     exit 1
   else
     echo "Created sensor: " $uuid
