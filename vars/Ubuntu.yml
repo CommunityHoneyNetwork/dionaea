@@ -3,6 +3,7 @@
     - runit
     - build-essential
     - cython3
+    - cmake
     - libcurl4-openssl-dev
     - libemu-dev
     - libev-dev

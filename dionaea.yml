@@ -42,20 +42,24 @@
         git:
           repo: "{{ dionaea_repo }}"
           version: "{{ dionaea_version }}"
-          dest: /opt/dionaea
+          dest: /code
 
       - name: Dionaea | copy output plugin
         copy:
           src: "/opt/outputs/hpfeeds.py"
           dest: "{{ dionaea_dir }}/modules/python/dionaea/"
 
+      - name: Dionaea | create build directory
+        file:
+          path: /code/build
+          state: directory
+
       - name: Dionaea | build dionaea
         command: "{{ item }}"
         args:
-          chdir: /opt/dionaea
+          chdir: /code/build
         with_items:
-          - "autoreconf -vi"
-          - "./configure {{config_options}}"
+          - "cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/dionaea .."
           - "make"
           - "make install"
 

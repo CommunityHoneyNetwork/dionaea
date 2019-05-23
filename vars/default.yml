@@ -4,6 +4,7 @@
     - python-virtualenv
     - autoconf
     - automake
+    - authbind
     - check
     - libtool
     - curl
@@ -11,7 +12,7 @@
 
   dionaea_repo: http://github.com/dinotools/dionaea
 
-  dionaea_version: 0.7.0
+  dionaea_version: 0.8.0
 
   dionaea_dir: /opt/dionaea
   dionaea_user: dionaea
