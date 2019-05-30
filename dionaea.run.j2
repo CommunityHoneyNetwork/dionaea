@@ -74,12 +74,6 @@ setup_dionaea_conf () {
     fi
 
 
-    # Enable services
-    for i in ${SERVICES[@]}; do
-      /bin/cp -f {{ dionaea_dir }}/etc/dionaea/services-available/$i.yaml ./services-enabled/$i.yaml
-    done
-
-
     # Remove other handlers and set up hpfeeds if enabled
     rm -f ./ihandlers-enabled/*.yaml
     if [[ ${HPFEEDS_ENABLED} == "true" ]]
