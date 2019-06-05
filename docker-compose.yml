@@ -6,3 +6,5 @@ services:
     image: dionaea:ubuntu
     volumes:
       - ./dionaea.sysconfig:/etc/default/dionaea:z
+    cap_add:
+      - NET_ADMIN
