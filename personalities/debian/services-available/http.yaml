@@ -1,6 +1,6 @@
 - name: http
   config:
-    root: "/opt/dionaea/var/dionaea/roots/www"
+    root: "var/lib/dionaea/http/root"
     ports:
       - 80
     ssl_ports:
@@ -21,7 +21,7 @@
       # this feature requires jinja2 template engine http://jinja.pocoo.org/
       enabled: false
       file_extension: .j2
-      path: "/opt/dionaea/var/dionaea/share/python/http/template/nginx"
+      path: "var/lib/dionaea/http/template/nginx"
       templates:
         autoindex:
           filename: autoindex.html.j2
@@ -30,4 +30,4 @@
           # - filename: error/{code}.html.j2
       # used to specify additional template values
       values:
-        # full_name: nginx/1.1
+        full_name: nginx/1.10.3

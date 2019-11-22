@@ -6,7 +6,7 @@
       - 5060
     tls_ports:
       - 5061
-    users: "/opt/dionaea/var/dionaea/sipaccounts.sqlite"
+    users: "var/lib/dionaea/sip/accounts.sqlite"
     rtp:
       enable: true
       # how to dump the rtp stream
@@ -15,7 +15,7 @@
         - bistream
         - pcap
       pcap:
-        path: "var/dionaea/rtp/{personality}/%Y-%m-%d/"
+        path: "var/lib/dionaea/sip/rtp/{personality}/%Y-%m-%d/"
         filename: "%H:%M:%S_{remote_host}_{remote_port}_in.pcap"
     personalities:
       default:
