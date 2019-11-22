@@ -114,7 +114,7 @@
       - name: Dionaea | patch 0.80 for SIP file path
         lineinfile:
           path: "{{ dionaea_dir }}/lib/dionaea/python/dionaea/sip/extras.py"
-          regexp: '        self.users = os.path.join(self.root_path, config.get'
+          regexp: '        self.users = os.path.join\(self.root_path, config.get'
           line: '        self.users = os.path.join(self.root_path, config.get("users", "var/lib/dionaea/sip/sipaccounts.sqlite"))'
           owner: dionaea
           group: root
