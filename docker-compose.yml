@@ -4,6 +4,8 @@ services:
     build:
       context: .
     image: dionaea:latest
+    volumes:
+      - ./dionaea:/etc/dionaea/:z
     env_file:
       - dionaea.env
     ports:

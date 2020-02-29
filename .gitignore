@@ -1,5 +1,5 @@
 *.swp
 docker-compose.override.yml
-cowrie/cowrie.json
 docker-compose-devel.yml
 logs/
+dionaea/
