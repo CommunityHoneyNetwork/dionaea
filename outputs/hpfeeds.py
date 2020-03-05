@@ -251,7 +251,7 @@ class hpclient(connection):
         return 1
 
     def handle_error(self, err):
-        logger.warn(str(err))
+        logger.warning(str(err))
         self.connected = False
         return 1
 
@@ -268,7 +268,7 @@ class hpfeedihandler(ihandler):
         try:
             reconnect_timeout = float(reconnect_timeout)
         except (TypeError, ValueError):
-            logger.warn("Unable to convert value '%s' for reconnect timeout to float" % reconnect_timeout)
+            logger.warning("Unable to convert value '%s' for reconnect timeout to float" % reconnect_timeout)
             reconnect_timeout = self.default_reconnect_timeout
 
         port = config.get("port")
@@ -277,7 +277,7 @@ class hpfeedihandler(ihandler):
         try:
             port = int(port)
         except (TypeError, ValueError):
-            logger.warn("Unable to convert value '%s' for port to int" % port)
+            logger.warning("Unable to convert value '%s' for port to int" % port)
             port = self.default_port
 
         self.client = hpclient(
@@ -290,6 +290,7 @@ class hpfeedihandler(ihandler):
         ihandler.__init__(self, path)
 
         self.tags = config['tags']
+        logger.debug('Set tags to: {}'.format(self.tags))
         self.dynip_resolve = config.get('dynip_resolve', '')
         self.dynip_timer = None
         self.ownip = None
@@ -336,7 +337,7 @@ class hpfeedihandler(ihandler):
                 local_port=con.local.port
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident(self, i):
         pass
@@ -408,7 +409,7 @@ class hpfeedihandler(ihandler):
                 url=icd.url
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_download_complete_hash(self, icd):
         try:
@@ -426,7 +427,7 @@ class hpfeedihandler(ihandler):
                 status="successful"
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_download_complete_unique(self, icd):
         self.handle_incident_dionaea_download_complete_again(icd)
@@ -436,7 +437,7 @@ class hpfeedihandler(ihandler):
         try:
             self.client.sendfile(icd.file)
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_download_complete_again(self, icd):
         if not hasattr(icd, 'con') or not self.client.connected:
@@ -457,7 +458,7 @@ class hpfeedihandler(ihandler):
                 url=icd.url
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_service_shell_listen(self, icd):
         try:
@@ -473,7 +474,7 @@ class hpfeedihandler(ihandler):
                 url=url
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_service_shell_connect(self, icd):
         try:
@@ -489,7 +490,7 @@ class hpfeedihandler(ihandler):
                 url=url
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_ftp_login(self, icd):
         try:
@@ -505,7 +506,7 @@ class hpfeedihandler(ihandler):
                 password=icd.password
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_smb_dcerpc_bind(self, icd):
         try:
@@ -521,7 +522,7 @@ class hpfeedihandler(ihandler):
                 smd_transfersyntax=icd.transfersyntax
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_smb_dcerpc_request(self, icd):
         if not hasattr(icd, 'con') or not self.client.connected:
@@ -538,7 +539,7 @@ class hpfeedihandler(ihandler):
                 dport=str(icd.con.local.port)
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mssql_login(self, icd):
         try:
@@ -554,7 +555,7 @@ class hpfeedihandler(ihandler):
                 password=icd.password
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mssql_cmd(self, icd):
         try:
@@ -569,7 +570,7 @@ class hpfeedihandler(ihandler):
                 cmd=icd.cmd
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_virustotal_report(self, icd):
         data = {'virustotal': dict()}
@@ -606,7 +607,7 @@ class hpfeedihandler(ihandler):
                     virustotal=data['virustotal']
                 )
             except Exception as e:
-                logger.warn('exception when publishing: {0}'.format(e))
+                logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mysql_login(self, icd):
         try:
@@ -622,7 +623,7 @@ class hpfeedihandler(ihandler):
                 password=icd.password
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mysql_command(self, icd):
         try:
@@ -637,7 +638,7 @@ class hpfeedihandler(ihandler):
                 cmd=icd.cmd
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mqtt_connect(self, icd):
         try:
@@ -657,7 +658,7 @@ class hpfeedihandler(ihandler):
                 mqtt_willmessage=icd.willmessage
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mqtt_publish(self, icd):
         try:
@@ -674,7 +675,7 @@ class hpfeedihandler(ihandler):
                 mqtt_message=icd.publishmessage
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_mqtt_subscribe(self, icd):
         try:
@@ -691,7 +692,7 @@ class hpfeedihandler(ihandler):
                 mqtt_message=icd.subscribemessage
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_module_emu_profile(self, icd):
         if not hasattr(icd, 'con') or not self.client.connected:
@@ -700,7 +701,7 @@ class hpfeedihandler(ihandler):
         try:
             self.client.publish(SCPROFCHAN, profile=icd.profile)
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_modules_python_sip_command(self, icd):
 
@@ -811,7 +812,7 @@ class hpfeedihandler(ihandler):
                 sip_data=data['sip_data']
             )
         except Exception as e:
-            logger.warn('exception when publishing: {0}'.format(e))
+            logger.warning('exception when publishing: {0}'.format(e))
 
     def _dynip_resolve(self, events, data):
         i = incident("dionaea.upload.request")
