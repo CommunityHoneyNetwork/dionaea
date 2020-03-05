@@ -5,5 +5,3 @@
     ident: ""
     secret: ""
     tags: []
-    # dynip_resolve: enable to lookup the sensor ip through a webservice
-    dynip_resolve: "http://hpfriends.honeycloud.net/ip"

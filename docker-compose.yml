@@ -1,8 +1,31 @@
 version: '2'
 services:
-  ubuntu:
+  dionaea:
     build:
       context: .
-    image: dionaea:ubuntu
+    image: dionaea:latest
     volumes:
-      - ./dionaea.sysconfig:/etc/default/dionaea:z
+      - ./dionaea:/etc/dionaea/:z
+    env_file:
+      - dionaea.env
+    ports:
+      - "21:21"
+      - "23:23"
+      - "69:69"
+      - "80:80"
+      - "123:123"
+      - "135:135"
+      - "443:443"
+      - "445:445"
+      - "1433:1433"
+      - "1723:1723"
+      - "1883:1883"
+      - "1900:1900"
+      - "3306:3306"
+      - "5000:5000"
+      - "5060:5060"
+      - "5061:5061"
+      - "11211:11211"
+      - "27017:27017"
+    cap_add:
+      - NET_ADMIN

@@ -45,11 +45,6 @@ except ImportError:
 logger = logging.getLogger('hpfeeds')
 logger.setLevel(logging.DEBUG)
 
-# def DEBUGPERF(msg):
-# 	print(msg)
-# logger.debug = DEBUGPERF
-# logger.critical = DEBUGPERF
-
 BUFSIZ = 16384
 
 OP_ERROR = 0
@@ -159,7 +154,7 @@ class hpclient(connection):
         logger.debug('hpclient init')
         connection.__init__(self, 'tcp')
         self.unpacker = FeedUnpack()
-        self.ident, self.secret = ident.encode('latin1'), secret.encode('latin1')
+        self.ident, self.secret = ident.encode('utf-8'), secret.encode('utf-8')
 
         self.connect(server, port)
         self.timeouts.reconnect = reconnect_timeout
@@ -213,11 +208,11 @@ class hpclient(connection):
     def publish(self, channel, **kwargs):
         if self.filehandle:
             self.msgqueue.append(
-                msgpublish(self.ident, channel, json.dumps(kwargs).encode('latin1'))
+                msgpublish(self.ident, channel, json.dumps(kwargs).encode('utf8'))
             )
         else:
             self.send(
-                msgpublish(self.ident, channel, json.dumps(kwargs).encode('latin1'))
+                msgpublish(self.ident, channel, json.dumps(kwargs).encode('utf8'))
             )
 
     def sendfile(self, filepath):
@@ -826,6 +821,6 @@ class hpfeedihandler(ihandler):
 
     def handle_incident_dionaea_modules_python_hpfeeds_dynipresult(self, icd):
         fh = open(icd.path, mode="rb")
-        self.ownip = fh.read().strip().decode('latin1')
+        self.ownip = fh.read().strip().decode('utf8')
         logger.debug('resolved own IP to: {0}'.format(self.ownip))
         fh.close()

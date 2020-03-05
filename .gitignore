@@ -1,0 +1,5 @@
+*.swp
+docker-compose.override.yml
+docker-compose-devel.yml
+logs/
+dionaea/
