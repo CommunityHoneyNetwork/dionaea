@@ -97,7 +97,8 @@ main() {
         -p dionaea \
         -d "${deploy_key}" \
         -u "${chn_server}" \
-        -o "${json}"
+        -o "${json}" \
+        -i "${ip}"
 
   local uid="$(cat ${json} | jq -r .identifier)"
   local secret="$(cat ${json} | jq -r .secret)"
