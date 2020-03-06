@@ -50,7 +50,7 @@ setup_dionaea_conf () {
       sed -i "s/ident:.*/ident: \"${uid}\"/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "s/secret:.*/secret: \"${secret}\"/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "s/port:.*/port: ${FEEDS_SERVER_PORT}/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
-      sed -i "s|tags:.*|tags: \[${TAGS}\]|g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
+      sed -i "s|tags:.*|tags: \[\"${TAGS}\"\]|g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
     fi
 
     for i in {1..1024}

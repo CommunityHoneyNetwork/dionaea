@@ -55,7 +55,7 @@ RUN git clone https://github.com/dinotools/dionaea.git --branch ${DIONAEA_VERSIO
 RUN mkdir -p /code/build /etc/service/cron /etc/service/dionaea
 WORKDIR /code/build
 RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/dionaea .. && make && make install
-COPY outputs/hpfeeds.py /opt/dionaea/modules/python/dionaea/
+COPY outputs/hpfeeds.py /opt/dionaea/lib/dionaea/python/dionaea/hpfeeds.py
 COPY outputs/hpfeeds.yaml /opt/dionaea/etc/dionaea/ihandlers-available/
 RUN chown -R dionaea:root /opt/dionaea
 RUN chown -R nobody:nogroup /opt/dionaea/var/log
@@ -66,6 +66,5 @@ COPY dionaea.run /etc/service/dionaea/run
 RUN chmod 0755 /opt/clean_bistreams.sh /etc/service/cron/run /etc/service/dionaea/run
 RUN sed -i -e 's/        self.users = os.path.join(self.root_path, config.get.*/        self.users = os.path.join(self.root_path, config.get("users", "var\/lib\/dionaea\/sip\/sipaccounts.sqlite"))/' /opt/dionaea/lib/dionaea/python/dionaea/sip/extras.py
 WORKDIR /opt
-RUN pip3 install git+https://github.com/CommunityHoneyNetwork/hpfeeds3.git
 
 ENTRYPOINT ["/usr/bin/runsvdir", "-P", "/etc/service"]
