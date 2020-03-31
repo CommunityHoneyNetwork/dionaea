@@ -29,12 +29,10 @@ from dionaea import IHandlerLoader
 from dionaea.core import ihandler, incident, g_dionaea, connection
 from dionaea.util import sha512file
 
-import os
 import logging
-import struct
-import hashlib
 import json
 import datetime
+import time
 from time import gmtime, strftime
 
 try:
@@ -42,34 +40,16 @@ try:
 except ImportError:
     pyev = None
 
+import hpfeeds
+
 logger = logging.getLogger('hpfeeds')
 logger.setLevel(logging.DEBUG)
 
-BUFSIZ = 16384
-
-OP_ERROR = 0
-OP_INFO = 1
-OP_AUTH = 2
-OP_PUBLISH = 3
-OP_SUBSCRIBE = 4
-
-MAXBUF = 1024**2
-SIZES = {
-    OP_ERROR: 5+MAXBUF,
-    OP_INFO: 5+256+20,
-    OP_AUTH: 5+256+20,
-    OP_PUBLISH: 5+MAXBUF,
-    OP_SUBSCRIBE: 5+256*2,
-}
 CONNCHAN = 'dionaea.connections'
 CAPTURECHAN = 'dionaea.capture'
 DCECHAN = 'dionaea.dcerpcrequests'
 SCPROFCHAN = 'dionaea.shellcodeprofiles'
 UNIQUECHAN = 'mwbinary.dionaea.sensorunique'
-
-
-class BadClient(Exception):
-        pass
 
 
 class HPFeedsHandlerLoader(IHandlerLoader):
@@ -86,174 +66,6 @@ def timestr():
     my_time = dt.strftime("%Y-%m-%d %H:%M:%S.%f")
     timezone = strftime("%Z %z", gmtime())
     return my_time + " " + timezone
-
-
-# packs a string with 1 byte length field
-def strpack8(x):
-    if isinstance(x, str):
-        x = x.encode('latin1')
-    return struct.pack('!B', len(x) % 0xff) + x
-
-
-# unpacks a string with 1 byte length field
-def strunpack8(x):
-    length = x[0]
-    return x[1:1+length], x[1+length:]
-
-
-def msghdr(op, data):
-    return struct.pack('!iB', 5+len(data), op) + data
-
-
-def msgpublish(ident, chan, data):
-    return msghdr(OP_PUBLISH, strpack8(ident) + strpack8(chan) + data)
-
-
-def msgsubscribe(ident, chan):
-    if isinstance(chan, str):
-        chan = chan.encode('latin1')
-    return msghdr(OP_SUBSCRIBE, strpack8(ident) + chan)
-
-
-def msgauth(rand, ident, secret):
-    auth_hash = hashlib.sha1(bytes(rand)+secret).digest()
-    return msghdr(OP_AUTH, strpack8(ident) + auth_hash)
-
-
-class FeedUnpack(object):
-    def __init__(self):
-        self.buf = bytearray()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return self.unpack()
-
-    def feed(self, data):
-        self.buf.extend(data)
-
-    def unpack(self):
-        if len(self.buf) < 5:
-            raise StopIteration('No message.')
-
-        ml, opcode = struct.unpack('!iB', self.buf[:5])
-        if ml > SIZES.get(opcode, MAXBUF):
-            raise BadClient('Not respecting MAXBUF.')
-
-        if len(self.buf) < ml:
-            raise StopIteration('No message.')
-
-        data = self.buf[5:ml]
-        del self.buf[:ml]
-        return opcode, data
-
-
-class hpclient(connection):
-    def __init__(self, server, port, ident, secret, reconnect_timeout=10.0):
-        logger.debug('hpclient init')
-        connection.__init__(self, 'tcp')
-        self.unpacker = FeedUnpack()
-        self.ident, self.secret = ident.encode('utf-8'), secret.encode('utf-8')
-
-        self.connect(server, port)
-        self.timeouts.reconnect = reconnect_timeout
-        self.sendfiles = []
-        self.msgqueue = []
-        self.filehandle = None
-        self.connected = False
-
-    def handle_established(self):
-        self.connected = True
-        logger.debug('hpclient established')
-
-    def handle_io_in(self, indata):
-        self.unpacker.feed(indata)
-
-        # if we are currently streaming a file, delay handling incoming messages
-        if self.filehandle:
-            return len(indata)
-
-        try:
-            for opcode, data in self.unpacker:
-                logger.debug('hpclient msg opcode {0} data {1}'.format(opcode, data))
-                if opcode == OP_INFO:
-                    name, rand = strunpack8(data)
-                    logger.debug('hpclient server name {0} rand {1}'.format(name, rand))
-                    self.send(msgauth(rand, self.ident, self.secret))
-
-                elif opcode == OP_PUBLISH:
-                    ident, data = strunpack8(data)
-                    chan, data = strunpack8(data)
-                    logger.debug('publish to {0} by {1}: {2}'.format(chan, ident, data))
-
-                elif opcode == OP_ERROR:
-                    logger.debug('errormessage from server: {0}'.format(data))
-                else:
-                    logger.debug('unknown opcode message: {0}'.format(opcode))
-        except BadClient:
-            logger.error('unpacker error, disconnecting.')
-            self.close()
-
-        return len(indata)
-
-    def handle_io_out(self):
-        if self.filehandle:
-            self.sendfiledata()
-        else:
-            if self.msgqueue:
-                m = self.msgqueue.pop(0)
-                self.send(m)
-
-    def publish(self, channel, **kwargs):
-        if self.filehandle:
-            self.msgqueue.append(
-                msgpublish(self.ident, channel, json.dumps(kwargs).encode('utf8'))
-            )
-        else:
-            self.send(
-                msgpublish(self.ident, channel, json.dumps(kwargs).encode('utf8'))
-            )
-
-    def sendfile(self, filepath):
-        # does not read complete binary into memory, read and send chunks
-        if not self.filehandle:
-            self.sendfileheader(filepath)
-            self.sendfiledata()
-        else:
-            self.sendfiles.append(filepath)
-
-    def sendfileheader(self, filepath):
-        self.filehandle = open(filepath, 'rb')
-        fsize = os.stat(filepath).st_size
-        headc = strpack8(self.ident) + strpack8(UNIQUECHAN)
-        headh = struct.pack('!iB', 5+len(headc)+fsize, OP_PUBLISH)
-        self.send(headh + headc)
-
-    def sendfiledata(self):
-        tmp = self.filehandle.read(BUFSIZ)
-        if not tmp:
-            if self.sendfiles:
-                fp = self.sendfiles.pop(0)
-                self.sendfileheader(fp)
-            else:
-                self.filehandle = None
-                self.handle_io_in(b'')
-        else:
-            self.send(tmp)
-
-    def handle_timeout_idle(self):
-        pass
-
-    def handle_disconnect(self):
-        logger.info('hpclient disconnect')
-        self.connected = False
-        return 1
-
-    def handle_error(self, err):
-        logger.warning(str(err))
-        self.connected = False
-        return 1
 
 
 class hpfeedihandler(ihandler):
@@ -280,12 +92,11 @@ class hpfeedihandler(ihandler):
             logger.warning("Unable to convert value '%s' for port to int" % port)
             port = self.default_port
 
-        self.client = hpclient(
+        self.client = hpfeeds.client.new(
             config['server'],
             port,
             config['ident'],
-            config['secret'],
-            reconnect_timeout=reconnect_timeout
+            config['secret']
         )
         ihandler.__init__(self, path)
 
@@ -324,17 +135,18 @@ class hpfeedihandler(ihandler):
     def connection_publish(self, icd, con_type):
         try:
             con = icd.con
+            meta = {"tags": self.tags,
+                    "connection_type": con_type,
+                    "connection_transport": con.transport,
+                    "connection_protocol": con.protocol,
+                    "remote_host": con.remote.host,
+                    "remote_port": con.remote.port,
+                    "remote_hostname": con.remote.hostname,
+                    "local_host": self._ownip(icd),
+                    "local_port": con.local.port}
             self.client.publish(
                 CONNCHAN,
-                tags=self.tags,
-                connection_type=con_type,
-                connection_transport=con.transport,
-                connection_protocol=con.protocol,
-                remote_host=con.remote.host,
-                remote_port=con.remote.port,
-                remote_hostname=con.remote.hostname,
-                local_host=self._ownip(icd),
-                local_port=con.local.port
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -399,14 +211,16 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_download_offer(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "url": icd.url}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                url=icd.url
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -414,17 +228,19 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_download_complete_hash(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "md5": icd.md5hash,
+                    "url": icd.url,
+                    "action": "download",
+                    "status": "successful"}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                md5=icd.md5hash,
-                url=icd.url,
-                action="download",
-                status="successful"
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -446,16 +262,18 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             sha512 = sha512file(icd.file)
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "md5": icd.md5hash,
+                    "sha512": sha512,
+                    "url": icd.url}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                md5=icd.md5hash,
-                sha512=sha512,
-                url=icd.url
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -464,14 +282,16 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             url = "bindshell://{}".format(str(icd.port))
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "url": url}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                url=url
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -480,14 +300,16 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             url = "connectbackshell://" + str(icd.host) + ":" + str(icd.port)
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "url": url}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                url=url
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -495,15 +317,17 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_ftp_login(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "username": icd.username,
+                    "password": icd.password}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                username=icd.username,
-                password=icd.password
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -511,15 +335,17 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_smb_dcerpc_bind(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "smb_uuid": icd.uuid,
+                    "smd_transfersyntax": icd.transfersyntax}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                smb_uuid=icd.uuid,
-                smd_transfersyntax=icd.transfersyntax
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -529,14 +355,16 @@ class hpfeedihandler(ihandler):
             return
         logger.debug('dcerpc request, publishing uuid {0}, opnum {1}'.format(icd.uuid, icd.opnum))
         try:
+            meta = {"tags": self.tags,
+                    "uuid": icd.uuid,
+                    "opnum": icd.opnum,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port)}
             self.client.publish(
                 DCECHAN,
-                uuid=icd.uuid,
-                opnum=icd.opnum,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port)
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -544,15 +372,17 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mssql_login(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "username": icd.username,
+                    "password": icd.password}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                username=icd.username,
-                password=icd.password
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -560,14 +390,16 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mssql_cmd(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "cmd": icd.cmd}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                cmd=icd.cmd
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -597,14 +429,16 @@ class hpfeedihandler(ihandler):
 
             try:
                 tstamp = timestr()
+                meta = {"tags": self.tags,
+                        "time": tstamp,
+                        "saddr": icd.con.remote.host,
+                        "sport": str(icd.con.remote.port),
+                        "daddr": self._ownip(icd),
+                        "dport": str(icd.con.local.port),
+                        "virustotal": data['virustotal']}
                 self.client.publish(
                     CAPTURECHAN,
-                    time=tstamp,
-                    saddr=icd.con.remote.host,
-                    sport=str(icd.con.remote.port),
-                    daddr=self._ownip(icd),
-                    dport=str(icd.con.local.port),
-                    virustotal=data['virustotal']
+                    json.dumps(meta).encode('utf-8')
                 )
             except Exception as e:
                 logger.warning('exception when publishing: {0}'.format(e))
@@ -612,15 +446,17 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mysql_login(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "username": icd.username,
+                    "password": icd.password}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                username=icd.username,
-                password=icd.password
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -628,14 +464,16 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mysql_command(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "cmd": icd.cmd}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                cmd=icd.cmd
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -643,19 +481,21 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mqtt_connect(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "username": icd.username,
+                    "password": icd.password,
+                    "mqtt_action": "connect",
+                    "mqtt_clientid": icd.clientid,
+                    "mqtt_willtopic": icd.willtopic,
+                    "mqtt_willmessage": icd.willmessage}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                username=icd.username,
-                password=icd.password,
-                mqtt_action="connect",
-                mqtt_clientid=icd.clientid,
-                mqtt_willtopic=icd.willtopic,
-                mqtt_willmessage=icd.willmessage
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -663,16 +503,18 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mqtt_publish(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "mqtt_action": "publish",
+                    "mqtt_topic": icd.publishtopic,
+                    "mqtt_message": icd.publishmessage}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                mqtt_action="publish",
-                mqtt_topic=icd.publishtopic,
-                mqtt_message=icd.publishmessage
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -680,16 +522,18 @@ class hpfeedihandler(ihandler):
     def handle_incident_dionaea_modules_python_mqtt_subscribe(self, icd):
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "mqtt_action": "subscribe",
+                    "mqtt_topic": icd.subscribetopic,
+                    "mqtt_message": icd.subscribemessage}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                mqtt_action="subscribe",
-                mqtt_topic=icd.subscribetopic,
-                mqtt_message=icd.subscribemessage
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
@@ -802,14 +646,16 @@ class hpfeedihandler(ihandler):
 
         try:
             tstamp = timestr()
+            meta = {"tags": self.tags,
+                    "time": tstamp,
+                    "saddr": icd.con.remote.host,
+                    "sport": str(icd.con.remote.port),
+                    "daddr": self._ownip(icd),
+                    "dport": str(icd.con.local.port),
+                    "sip_data": data['sip_data']}
             self.client.publish(
                 CAPTURECHAN,
-                time=tstamp,
-                saddr=icd.con.remote.host,
-                sport=str(icd.con.remote.port),
-                daddr=self._ownip(icd),
-                dport=str(icd.con.local.port),
-                sip_data=data['sip_data']
+                json.dumps(meta).encode('utf-8')
             )
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
