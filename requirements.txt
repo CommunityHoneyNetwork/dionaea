@@ -1,2 +1,4 @@
 Cython
 chnutils>=0.0.7
+twisted
+git+https://github.com/CommunityHoneyNetwork/hpfeeds3.git
