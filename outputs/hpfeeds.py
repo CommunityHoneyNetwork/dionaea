@@ -73,14 +73,6 @@ class hpfeedihandler(ihandler):
 
     def __init__(self, path, config=None):
         logger.debug('hpfeedhandler init')
-        reconnect_timeout = config.get("reconnect_timeout")
-        if reconnect_timeout is None:
-            reconnect_timeout = self.default_reconnect_timeout
-        try:
-            reconnect_timeout = float(reconnect_timeout)
-        except (TypeError, ValueError):
-            logger.warning("Unable to convert value '%s' for reconnect timeout to float" % reconnect_timeout)
-            reconnect_timeout = self.default_reconnect_timeout
 
         port = config.get("port")
         if port is None:
