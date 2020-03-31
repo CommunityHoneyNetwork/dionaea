@@ -341,7 +341,7 @@ class hpfeedihandler(ihandler):
                     "daddr": self._ownip(icd),
                     "dport": str(icd.con.local.port),
                     "smb_uuid": icd.uuid,
-                    "smd_transfersyntax": icd.transfersyntax}
+                    "smb_transfersyntax": icd.transfersyntax}
             self.client.publish(
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
