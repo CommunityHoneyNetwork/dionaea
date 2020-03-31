@@ -127,6 +127,7 @@ class hpfeedihandler(ihandler):
         try:
             con = icd.con
             meta = {"tags": self.tags,
+                    "event_type": "Dionaea connection event",
                     "connection_type": con_type,
                     "connection_transport": con.transport,
                     "connection_protocol": con.protocol,
@@ -203,6 +204,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "Download offer event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -220,6 +222,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "Download with file hash",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -254,6 +257,7 @@ class hpfeedihandler(ihandler):
             tstamp = timestr()
             sha512 = sha512file(icd.file)
             meta = {"tags": self.tags,
+                    "event_type": "Download with file hash",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -274,6 +278,7 @@ class hpfeedihandler(ihandler):
             tstamp = timestr()
             url = "bindshell://{}".format(str(icd.port))
             meta = {"tags": self.tags,
+                    "event_type": "Bind shell event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -292,6 +297,7 @@ class hpfeedihandler(ihandler):
             tstamp = timestr()
             url = "connectbackshell://" + str(icd.host) + ":" + str(icd.port)
             meta = {"tags": self.tags,
+                    "event_type": "Connectback shell event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -309,6 +315,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "FTP login event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -327,13 +334,14 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "SMB DCERPC bind event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
                     "daddr": self._ownip(icd),
                     "dport": str(icd.con.local.port),
                     "smb_uuid": icd.uuid,
-                    "smd_transfersyntax": icd.transfersyntax}
+                    "smb_transfersyntax": icd.transfersyntax}
             self.client.publish(
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
@@ -346,7 +354,10 @@ class hpfeedihandler(ihandler):
             return
         logger.debug('dcerpc request, publishing uuid {0}, opnum {1}'.format(icd.uuid, icd.opnum))
         try:
+            tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "SMB DCERPC request event",
+                    "time": tstamp,
                     "uuid": icd.uuid,
                     "opnum": icd.opnum,
                     "saddr": icd.con.remote.host,
@@ -364,6 +375,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MSSQL login event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -382,6 +394,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MSSQL command event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -421,6 +434,7 @@ class hpfeedihandler(ihandler):
             try:
                 tstamp = timestr()
                 meta = {"tags": self.tags,
+                        "event_type": "VirusTotal report for file",
                         "time": tstamp,
                         "saddr": icd.con.remote.host,
                         "sport": str(icd.con.remote.port),
@@ -438,6 +452,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MySQL login event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -456,6 +471,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MySQL command event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -473,6 +489,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MQTT connection event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -495,6 +512,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MQTT publish event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -514,6 +532,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "MQTT subscribe event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
@@ -638,6 +657,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             meta = {"tags": self.tags,
+                    "event_type": "SIP command event",
                     "time": tstamp,
                     "saddr": icd.con.remote.host,
                     "sport": str(icd.con.remote.port),
