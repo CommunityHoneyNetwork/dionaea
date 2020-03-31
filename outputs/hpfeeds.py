@@ -32,7 +32,6 @@ from dionaea.util import sha512file
 import logging
 import json
 import datetime
-import time
 from time import gmtime, strftime
 
 try:
