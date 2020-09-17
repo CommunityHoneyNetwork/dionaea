@@ -50,6 +50,7 @@ RUN apt-get update && apt-get upgrade -y && \
       python3-bson \
       python3-yaml \
       python3-boto3 \
+      python3-setuptools \
       python3-pip \
       ttf-mscorefonts-installer && \
     rm -rf /var/lib/apt/lists/* && \
