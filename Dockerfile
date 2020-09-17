@@ -13,7 +13,12 @@ ENV DOCKER "yes"
 ENV DEBIAN_FRONTEND "noninteractive"
 ENV DIONAEA_VERSION "0.8.0"
 
-RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y authbind \
+COPY requirements.txt /opt/requirements.txt
+
+# hadolint ignore=DL3008,DL3005
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install --no-install-recommends -y \
+      authbind \
       curl \
       cron \
       runit \
@@ -47,25 +52,26 @@ RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recomme
       python3-boto3 \
       python3-pip \
       ttf-mscorefonts-installer && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -s /bin/bash dionaea && \
+    pip3 install -r /opt/requirements.txt && \
+    git clone https://github.com/dinotools/dionaea.git --branch ${DIONAEA_VERSION} /code && \
+    mkdir -p /code/build /etc/service/cron /etc/service/dionaea
 
-RUN useradd -s /bin/bash dionaea
-COPY requirements.txt /opt/requirements.txt
-RUN pip3 install -r /opt/requirements.txt
-RUN git clone https://github.com/dinotools/dionaea.git --branch ${DIONAEA_VERSION} /code
-RUN mkdir -p /code/build /etc/service/cron /etc/service/dionaea
 WORKDIR /code/build
 RUN cmake -DCMAKE_INSTALL_PREFIX:PATH=/opt/dionaea .. && make && make install
+
 COPY outputs/hpfeeds.py /opt/dionaea/lib/dionaea/python/dionaea/hpfeeds.py
 COPY outputs/hpfeeds.yaml /opt/dionaea/etc/dionaea/ihandlers-available/
-RUN chown -R dionaea:root /opt/dionaea
-RUN chown -R nobody:nogroup /opt/dionaea/var/log
+RUN chown -R dionaea:root /opt/dionaea && \
+    chown -R nobody:nogroup /opt/dionaea/var/log
+
 COPY clean_bistreams.sh /opt/clean_bistreams.sh
 RUN echo '0 8 * * * /opt/clean_bistreams.sh' >> /etc/crontab
 COPY cron.run /etc/service/cron/run
 COPY dionaea.run /etc/service/dionaea/run
-RUN chmod 0755 /opt/clean_bistreams.sh /etc/service/cron/run /etc/service/dionaea/run
-RUN sed -i -e 's/        self.users = os.path.join(self.root_path, config.get.*/        self.users = os.path.join(self.root_path, config.get("users", "var\/lib\/dionaea\/sip\/sipaccounts.sqlite"))/' /opt/dionaea/lib/dionaea/python/dionaea/sip/extras.py
+RUN chmod 0755 /opt/clean_bistreams.sh /etc/service/cron/run /etc/service/dionaea/run && \
+    sed -i -e 's/        self.users = os.path.join(self.root_path, config.get.*/        self.users = os.path.join(self.root_path, config.get("users", "var\/lib\/dionaea\/sip\/sipaccounts.sqlite"))/' /opt/dionaea/lib/dionaea/python/dionaea/sip/extras.py
 WORKDIR /opt
 
 ENTRYPOINT ["/usr/bin/runsvdir", "-P", "/etc/service"]
