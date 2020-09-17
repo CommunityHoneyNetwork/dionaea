@@ -13,40 +13,41 @@ ENV DOCKER "yes"
 ENV DEBIAN_FRONTEND "noninteractive"
 ENV DIONAEA_VERSION "0.8.0"
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y authbind \
-    curl \
-    cron \
-    runit \
-    git \
-    python3-virtualenv \
-    autoconf \
-    automake \
-    authbind \
-    check \
-    libtool \
-    build-essential \
-    cmake \
-    check \
-    cython3 \
-    libcurl4-openssl-dev \
-    libemu-dev \
-    libev-dev \
-    libglib2.0-dev \
-    libloudmouth1-dev \
-    libnetfilter-queue-dev \
-    libnl-3-dev \
-    libpcap-dev \
-    libssl-dev \
-    libtool \
-    libudns-dev \
-    jq \
-    python3 \
-    python3-dev \
-    python3-bson \
-    python3-yaml \
-    python3-boto3 \
-    python3-pip \
-    ttf-mscorefonts-installer
+RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y authbind \
+      curl \
+      cron \
+      runit \
+      git \
+      python3-virtualenv \
+      autoconf \
+      automake \
+      authbind \
+      check \
+      libtool \
+      build-essential \
+      cmake \
+      check \
+      cython3 \
+      libcurl4-openssl-dev \
+      libemu-dev \
+      libev-dev \
+      libglib2.0-dev \
+      libloudmouth1-dev \
+      libnetfilter-queue-dev \
+      libnl-3-dev \
+      libpcap-dev \
+      libssl-dev \
+      libtool \
+      libudns-dev \
+      jq \
+      python3 \
+      python3-dev \
+      python3-bson \
+      python3-yaml \
+      python3-boto3 \
+      python3-pip \
+      ttf-mscorefonts-installer && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN useradd -s /bin/bash dionaea
 COPY requirements.txt /opt/requirements.txt
