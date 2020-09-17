@@ -55,7 +55,7 @@ RUN apt-get update && apt-get upgrade -y && \
       ttf-mscorefonts-installer && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -s /bin/bash dionaea && \
-    pip3 install -r /opt/requirements.txt && \
+    python3 -m pip install -r /opt/requirements.txt && \
     git clone https://github.com/dinotools/dionaea.git --branch ${DIONAEA_VERSION} /code && \
     mkdir -p /code/build /etc/service/cron /etc/service/dionaea
 
