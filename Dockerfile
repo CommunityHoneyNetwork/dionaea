@@ -1,13 +1,13 @@
 FROM ubuntu:18.04
 
-LABEL maintainer Team Stingar <team.stingar@duke.edu>
-LABEL name "dionaea"
-LABEL version "1.9"
-LABEL release "1"
-LABEL summary "Dionaea HoneyPot container"
-LABEL description "Dionaea is meant to be a nepenthes successor, embedding python as scripting language, using libemu to detect shellcodes, supporting ipv6 and tls."
+LABEL maintainer="Team Stingar <team-stingar@duke.edu>"
+LABEL name="dionaea"
+LABEL version="1.9.1"
+LABEL release="1"
+LABEL summary="Dionaea HoneyPot container"
+LABEL description="Dionaea is meant to be a nepenthes successor, embedding python as scripting language, using libemu to detect shellcodes, supporting ipv6 and tls."
 LABEL autoritative-source-url "https://github.com/CommunityHoneyNetwork/dionaea"
-LABEL changelog-url "https://github.com/CommunityHoneyNetwork/dionaea/commits/master"
+LABEL changelog-url="https://github.com/CommunityHoneyNetwork/dionaea/commits/master"
 
 ENV DOCKER "yes"
 ENV DEBIAN_FRONTEND "noninteractive"
