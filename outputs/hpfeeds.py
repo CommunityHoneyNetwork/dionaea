@@ -27,7 +27,7 @@
 
 from dionaea import IHandlerLoader
 from dionaea.core import ihandler, incident, g_dionaea, connection
-from dionaea.util import sha512file
+from dionaea.util import sha512file, sha256file
 
 import logging
 import json
@@ -256,6 +256,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             sha512 = sha512file(icd.file)
+            sha256 = sha256file(icd.file)
             meta = {"tags": self.tags,
                     "event_type": "Download with file hash",
                     "time": tstamp,
@@ -265,6 +266,7 @@ class hpfeedihandler(ihandler):
                     "dport": str(icd.con.local.port),
                     "md5": icd.md5hash,
                     "sha512": sha512,
+                    "sha256": sha256,
                     "url": icd.url}
             self.client.publish(
                 CAPTURECHAN,
