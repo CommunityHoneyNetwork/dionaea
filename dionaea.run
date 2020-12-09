@@ -42,7 +42,6 @@ setup_dionaea_conf () {
 
 
     # Remove other handlers and set up hpfeeds if enabled
-    rm -f ./ihandlers-enabled/*.yaml
     if [[ ${HPFEEDS_ENABLED} == "true" ]]
     then
       ln -s /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml ./ihandlers-enabled/hpfeeds.yaml
