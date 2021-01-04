@@ -6,7 +6,7 @@ LABEL version="1.9.1"
 LABEL release="1"
 LABEL summary="Dionaea HoneyPot container"
 LABEL description="Dionaea is meant to be a nepenthes successor, embedding python as scripting language, using libemu to detect shellcodes, supporting ipv6 and tls."
-LABEL autoritative-source-url "https://github.com/CommunityHoneyNetwork/dionaea"
+LABEL autoritative-source-url="https://github.com/CommunityHoneyNetwork/dionaea"
 LABEL changelog-url="https://github.com/CommunityHoneyNetwork/dionaea/commits/master"
 
 ENV DOCKER "yes"
@@ -52,6 +52,7 @@ RUN apt-get update && apt-get upgrade -y && \
       python3-boto3 \
       python3-setuptools \
       python3-pip \
+      sqlite3 \
       ttf-mscorefonts-installer && \
     rm -rf /var/lib/apt/lists/*
 

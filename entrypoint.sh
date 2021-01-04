@@ -53,7 +53,6 @@ main() {
       sleep 120
       exit 1
   fi
-
   exec /opt/dionaea/bin/dionaea -c "/opt/dionaea/etc/dionaea/dionaea.cfg" -u dionaea -g nogroup -l ${dionaea_log_level}
   sleep 10
 }

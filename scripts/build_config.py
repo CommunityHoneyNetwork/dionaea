@@ -19,6 +19,8 @@ def main():
         logger.setLevel(logging.DEBUG)
 
     logger.info("Running build_config.py")
+    os.remove('/opt/dionaea/etc/dionaea/ihandlers-enabled/log_sqlite.yaml')
+    logger.info('Removed default log_sqlite.yaml')
     logger.info("Building hpfeeds config")
 
     with open('/opt/ihandlers-available/hpfeeds.yaml') as f:

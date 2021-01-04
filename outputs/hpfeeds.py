@@ -70,6 +70,8 @@ def timestr():
 class hpfeedihandler(ihandler):
     default_reconnect_timeout = 10.0
     default_port = 10000
+    logger = logging.getLogger('hpfeeds')
+    logger.setLevel(logging.DEBUG)
 
     def __init__(self, path, config=None):
         logger.debug('hpfeedhandler init')
@@ -140,6 +142,7 @@ class hpfeedihandler(ihandler):
                 CONNCHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published connection: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -215,12 +218,15 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
     def handle_incident_dionaea_download_complete_hash(self, icd):
         try:
             tstamp = timestr()
+            sha512 = sha512file(icd.file)
+            sha256 = sha256file(icd.file)
             meta = {"tags": self.tags,
                     "event_type": "Download with file hash",
                     "time": tstamp,
@@ -229,6 +235,8 @@ class hpfeedihandler(ihandler):
                     "daddr": self._ownip(icd),
                     "dport": str(icd.con.local.port),
                     "md5": icd.md5hash,
+                    "sha256": sha256,
+                    "sha512": sha512,
                     "url": icd.url,
                     "action": "download",
                     "status": "successful"}
@@ -236,6 +244,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -291,6 +300,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -310,6 +320,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -329,6 +340,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -348,6 +360,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -370,6 +383,7 @@ class hpfeedihandler(ihandler):
                 DCECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -389,6 +403,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -407,6 +422,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -447,6 +463,7 @@ class hpfeedihandler(ihandler):
                     CAPTURECHAN,
                     json.dumps(meta).encode('utf-8')
                 )
+                logger.debug('Published event: {}'.format(meta))
             except Exception as e:
                 logger.warning('exception when publishing: {0}'.format(e))
 
@@ -466,6 +483,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -484,6 +502,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -507,6 +526,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -527,6 +547,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -547,6 +568,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -556,6 +578,7 @@ class hpfeedihandler(ihandler):
         logger.debug('emu profile, publishing length {0}'.format(len(icd.profile)))
         try:
             self.client.publish(SCPROFCHAN, profile=icd.profile)
+            logger.debug('Published event: {}'.format(icd.profile))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
@@ -670,6 +693,7 @@ class hpfeedihandler(ihandler):
                 CAPTURECHAN,
                 json.dumps(meta).encode('utf-8')
             )
+            logger.debug('Published event: {}'.format(meta))
         except Exception as e:
             logger.warning('exception when publishing: {0}'.format(e))
 
