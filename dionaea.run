@@ -26,6 +26,7 @@ setup_dionaea_conf () {
     local secret=${2:-}
     local debug=${3:-false}
     local personality=${PERSONALITY:-default}
+    local ip=${REPORTED_IP:-}
 
     pushd /opt/dionaea/etc/dionaea
 
@@ -50,6 +51,7 @@ setup_dionaea_conf () {
       sed -i "s/secret:.*/secret: \"${secret}\"/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "s/port:.*/port: ${FEEDS_SERVER_PORT}/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
       sed -i "s|tags:.*|tags: \[\"${TAGS}\"\]|g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
+      sed -i "s/reported_ip:.*/reported_ip: \"${ip}\"/g" /opt/dionaea/etc/dionaea/ihandlers-available/hpfeeds.yaml
     fi
 
     for i in {1..1024}
@@ -78,7 +80,7 @@ main() {
   local feeds_server=${FEEDS_SERVER:-localhost}
   local feeds_server_port=${FEEDS_SERVER_PORT:-10000}
   local json=${DIONAEA_JSON:-dionaea.json}
-  local ip=${IP_ADDRESS:-}
+  local ip=${REPORTED_IP:-}
 
   local debug=${DEBUG:-false}
 

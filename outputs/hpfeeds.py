@@ -27,7 +27,7 @@
 
 from dionaea import IHandlerLoader
 from dionaea.core import ihandler, incident, g_dionaea, connection
-from dionaea.util import sha512file, sha256file
+from dionaea.util import sha512file
 
 import logging
 import json
@@ -96,6 +96,7 @@ class hpfeedihandler(ihandler):
         self.dynip_resolve = config.get('dynip_resolve', '')
         self.dynip_timer = None
         self.ownip = None
+
         if isinstance(self.dynip_resolve, str) and self.dynip_resolve.startswith("http"):
             if pyev is None:
                 logger.debug('You are missing the python pyev binding in your dionaea installation.')
@@ -104,6 +105,12 @@ class hpfeedihandler(ihandler):
                 self.loop = pyev.default_loop()
                 self.dynip_timer = pyev.Timer(2., 300, self.loop, self._dynip_resolve)
                 self.dynip_timer.start()
+        reported_ip = config.get("reported_ip")
+        if (reported_ip != None) and (reported_ip != "UNSET_REPORTED_IP"):
+            self.reported_ip = reported_ip
+            logger.debug('Set self.ownip based on reported_ip to {}'.format(self.ownip))
+        else:
+            self.reported_ip = None
 
     def stop(self):
         if self.dynip_timer:
@@ -117,7 +124,10 @@ class hpfeedihandler(ihandler):
                 return self.ownip
             else:
                 raise Exception('Own IP not yet resolved!')
-        return icd.con.local.host
+        elif self.reported_ip:
+            return self.reported_ip
+        else:
+            return icd.con.local.host
 
     def __del__(self):
         # self.client.close()
@@ -256,7 +266,7 @@ class hpfeedihandler(ihandler):
         try:
             tstamp = timestr()
             sha512 = sha512file(icd.file)
-            sha256 = sha256file(icd.file)
+            #sha256 = sha256file(icd.file)
             meta = {"tags": self.tags,
                     "event_type": "Download with file hash",
                     "time": tstamp,
@@ -266,7 +276,7 @@ class hpfeedihandler(ihandler):
                     "dport": str(icd.con.local.port),
                     "md5": icd.md5hash,
                     "sha512": sha512,
-                    "sha256": sha256,
+                    #"sha256": sha256,
                     "url": icd.url}
             self.client.publish(
                 CAPTURECHAN,

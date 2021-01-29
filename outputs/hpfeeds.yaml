@@ -5,3 +5,4 @@
     ident: ""
     secret: ""
     tags: []
+    reported_ip: "UNSET_REPORTED_IP"
